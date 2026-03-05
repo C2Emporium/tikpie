@@ -14,8 +14,11 @@ export default function AdminPage() {
   const [videos, setVideos] = useState<VideoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [addingByUrl, setAddingByUrl] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [titleByUrl, setTitleByUrl] = useState("");
 
   const loadVideos = async () => {
     try {
@@ -62,7 +65,7 @@ export default function AdminPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Échec de l’envoi");
+        throw new Error(typeof data?.error === "string" ? data.error : "Échec. En production, utilisez « Ajouter par URL ».");
       }
 
       setTitle("");
@@ -72,6 +75,35 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : "Erreur");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleAddByUrl = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!videoUrl.trim() || !titleByUrl.trim()) {
+      setError("URL et titre requis.");
+      return;
+    }
+    setError(null);
+    setAddingByUrl(true);
+    try {
+      const res = await fetch("/api/videos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: videoUrl.trim(), title: titleByUrl.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const msg = typeof data?.error === "string" ? data.error : "Échec. Vérifiez l’URL (lien direct vers un fichier vidéo) et que la base est configurée.";
+        throw new Error(msg);
+      }
+      setVideoUrl("");
+      setTitleByUrl("");
+      await loadVideos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setAddingByUrl(false);
     }
   };
 
@@ -101,11 +133,64 @@ export default function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-2xl px-4 py-8">
+        {/* Ajouter par URL — idéal pour le site en ligne (Vercel) */}
+        <form
+          onSubmit={handleAddByUrl}
+          className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
+        >
+          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Ajouter par URL</h2>
+          <p className="mb-4 text-xs text-zinc-500">
+            Colle le lien direct d’une vidéo (MP4, etc.) déjà en ligne — Cloudinary, Bunny, ou tout hébergeur.
+          </p>
+          <p className="mb-4 text-xs text-amber-600/90">
+            Si l'ajout échoue : ouvrez <a href="/api/health" target="_blank" rel="noopener noreferrer" className="underline">/api/health</a> pour tester la base. Sur Vercel, ajoutez <strong>DATABASE_URL</strong> (Settings → Environment Variables) avec l'URL Neon.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="videoUrl" className="mb-1 block text-xs text-zinc-500">
+                URL de la vidéo
+              </label>
+              <input
+                id="videoUrl"
+                type="url"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-zinc-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="titleByUrl" className="mb-1 block text-xs text-zinc-500">
+                Titre
+              </label>
+              <input
+                id="titleByUrl"
+                type="text"
+                value={titleByUrl}
+                onChange={(e) => setTitleByUrl(e.target.value)}
+                placeholder="Titre"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-zinc-600 focus:outline-none"
+              />
+            </div>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <button
+              type="submit"
+              disabled={addingByUrl}
+              className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {addingByUrl ? "Ajout…" : "Ajouter la vidéo"}
+            </button>
+          </div>
+        </form>
+
         <form
           onSubmit={handleSubmit}
           className="mb-10 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
         >
-          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Nouvelle vidéo</h2>
+          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Upload fichier (local uniquement)</h2>
+          <p className="mb-4 text-xs text-zinc-500">
+            En production (Vercel) les fichiers ne sont pas conservés — utilise « Ajouter par URL » ci-dessus.
+          </p>
           <div className="space-y-4">
             <div>
               <label htmlFor="title" className="mb-1 block text-xs text-zinc-500">
@@ -131,9 +216,6 @@ export default function AdminPage() {
                 className="block w-full text-xs text-zinc-400 file:mr-3 file:rounded file:border-0 file:bg-zinc-600 file:px-3 file:py-1.5 file:text-zinc-200 file:cursor-pointer hover:file:bg-zinc-500"
               />
             </div>
-            {error && (
-              <p className="text-xs text-red-400">{error}</p>
-            )}
             <button
               type="submit"
               disabled={uploading}

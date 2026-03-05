@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ExoClickGlobal from "@/components/ExoClickGlobal";
 
 export const metadata: Metadata = {
   title: "Tikpie - Short-Form Video",
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="fr" className="dark">
       <body className="min-h-screen bg-black text-white antialiased">
         {children}
+        <ExoClickGlobal />
       </body>
     </html>
   );

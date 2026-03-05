@@ -4,18 +4,11 @@ Méthode recommandée : **GitHub** (code) + **Vercel** (hébergement gratuit) + 
 
 ---
 
-## 1. Préparer le projet sur GitHub
+## 1. Pousser le projet sur GitHub
 
-### Créer un dépôt
+Repo Tikpie : **[github.com/C2Emporium/tikpie](https://github.com/C2Emporium/tikpie)**
 
-1. Va sur [github.com](https://github.com) → **New repository**.
-2. Nom du repo : par ex. `tikpie`.
-3. **Private** ou **Public** selon ton choix. Ne coche pas « Add a README » si tu as déjà un projet local.
-4. Clique sur **Create repository**.
-
-### Pousser ton code
-
-Dans un terminal, à la racine du projet (`tikpie-app`) :
+Dans un terminal, à la racine du projet :
 
 ```bash
 cd /Users/taylorwush/tikpie-app
@@ -24,11 +17,16 @@ git init
 git add .
 git commit -m "Initial commit – Tikpie"
 git branch -M main
-git remote add origin https://github.com/TON_USERNAME/tikpie.git
+git remote add origin https://github.com/C2Emporium/tikpie.git
 git push -u origin main
 ```
 
-Remplace `TON_USERNAME` et `tikpie` par ton compte GitHub et le nom du repo.
+Si le dépôt existe déjà et que tu as déjà un `origin`, utilise plutôt :
+
+```bash
+git remote set-url origin https://github.com/C2Emporium/tikpie.git
+git push -u origin main
+```
 
 ---
 

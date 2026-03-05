@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+const isBuild =
+  process.env.NEXT_PHASE === "phase-production-build" ||
+  process.env.SKIP_DB === "1";
+
 export async function GET() {
+  if (isBuild) {
+    return NextResponse.json({ ok: true, build: true });
+  }
   try {
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(

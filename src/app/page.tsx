@@ -11,20 +11,27 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   let feed: FeedItem[] = [];
 
-  try {
-    const videos = await prisma.video.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    feed = buildFeedWithAds(
-      videos.map((v) => ({
-        id: v.id,
-        url: v.url,
-        title: v.title,
-        likes: v.likes,
-      }))
-    );
-  } catch {
-    feed = [];
+  // Pendant le build (ex: Vercel), ne pas appeler la DB pour éviter exit 1.
+  // Sur Vercel : ajoute SKIP_DB=1 dans Settings > Environment Variables, scope "Build" uniquement.
+  const skipDb =
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.SKIP_DB === "1";
+  if (!skipDb) {
+    try {
+      const videos = await prisma.video.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+      feed = buildFeedWithAds(
+        videos.map((v) => ({
+          id: v.id,
+          url: v.url,
+          title: v.title,
+          likes: v.likes,
+        }))
+      );
+    } catch {
+      feed = [];
+    }
   }
 
   return (

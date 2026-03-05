@@ -5,6 +5,9 @@ import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
 import VerticalFeed from "@/components/VerticalFeed";
 
+// Évite la génération statique au build (DB non disponible sur Vercel à ce moment)
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   let feed: FeedItem[] = [];
 

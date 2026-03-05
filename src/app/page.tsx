@@ -25,7 +25,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-black dark">
+    <main id="main-content" className="min-h-screen bg-black dark" role="main">
       <AppHeader />
       <VerticalFeed items={feed} />
       <BottomNav />

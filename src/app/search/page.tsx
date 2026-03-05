@@ -39,9 +39,13 @@ function SearchContent() {
     <div className="min-h-screen pt-14 pb-20 px-4">
       <div className="max-w-xl mx-auto pt-4">
         <SearchBar placeholder="Rechercher vidéos..." className="flex sm:hidden mb-6" />
-        {q && (
+        {!q.trim() ? (
           <p className="text-zinc-500 text-sm mb-4">
-            {loading ? "Recherche..." : results.length === 0 ? "Aucun résultat." : `${results.length} vidéo(s).`}
+            Saisis un mot-clé dans la barre de recherche pour trouver des vidéos.
+          </p>
+        ) : (
+          <p className="text-zinc-500 text-sm mb-4" aria-live="polite">
+            {loading ? "Recherche..." : results.length === 0 ? "Aucun résultat pour cette recherche." : `${results.length} vidéo(s) trouvée(s).`}
           </p>
         )}
         <ul className="space-y-3">
@@ -64,7 +68,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <main className="min-h-screen bg-black">
+    <main id="main-content" className="min-h-screen bg-black" role="main">
       <AppHeader />
       <Suspense fallback={<div className="min-h-screen pt-14 pb-20" />}>
         <SearchContent />

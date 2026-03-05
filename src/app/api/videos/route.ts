@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { buildFeedWithAds } from "@/lib/feed";
 import type { FeedItem } from "@/types/video";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "videos");
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB (local)
+const MAX_FILE_SIZE_VERCEL = 4 * 1024 * 1024; // 4 MB (limite requête Vercel ~4.5 MB)
 const ALLOWED_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 export async function GET() {
@@ -31,7 +33,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
 
-  // Option 1 : ajout par URL (JSON) — pour contenu hébergé ailleurs (Cloudinary, Bunny, etc.)
+  // Option 1 : ajout par URL (JSON)
   if (contentType.includes("application/json")) {
     try {
       if (!process.env.DATABASE_URL) {
@@ -71,7 +73,7 @@ export async function POST(request: Request) {
       const message =
         e && typeof (e as { message?: string }).message === "string"
           ? (e as { message: string }).message
-          : "Erreur lors de l’ajout. Vérifiez que DATABASE_URL est bien configurée sur Vercel.";
+          : "Erreur base de données. Vérifiez DATABASE_URL sur Vercel.";
       return NextResponse.json(
         { error: message },
         { status: 500 }
@@ -79,17 +81,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // Option 2 : upload fichier (FormData) — désactivé sur Vercel (disque en lecture seule)
-  if (process.env.VERCEL) {
-    return NextResponse.json(
-      {
-        error:
-          "En production, l’upload de fichier n’est pas disponible. Utilisez « Ajouter par URL » avec le lien direct d’une vidéo déjà en ligne (Cloudinary, Bunny, etc.).",
-      },
-      { status: 400 }
-    );
-  }
-
+  // Option 2 : upload fichier (FormData) — local = disque, Vercel = Blob si BLOB_READ_WRITE_TOKEN
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -109,23 +101,47 @@ export async function POST(request: Request) {
       );
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    const isVercel = !!process.env.VERCEL;
+    const maxSize = isVercel ? MAX_FILE_SIZE_VERCEL : MAX_FILE_SIZE;
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "Fichier trop volumineux (max 100 Mo)" },
+        {
+          error: isVercel
+            ? `Fichier trop volumineux (max ${Math.round(MAX_FILE_SIZE_VERCEL / 1024 / 1024)} Mo en production). Pour plus lourd, utilisez « Ajouter par URL » avec un lien Cloudinary/Bunny.`
+            : "Fichier trop volumineux (max 100 Mo)",
+        },
         { status: 400 }
       );
     }
 
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
     const ext = path.extname(file.name) || ".mp4";
-    const safeName = `v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}${ext}`;
-    const filePath = path.join(UPLOAD_DIR, safeName);
+    const pathname = `videos/v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}${ext}`;
 
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
+    let url: string;
 
-    const url = `/videos/${safeName}`;
+    if (isVercel && process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(pathname, file, {
+        access: "public",
+        addRandomSuffix: true,
+        contentType: file.type || "video/mp4",
+      });
+      url = blob.url;
+    } else if (isVercel) {
+      return NextResponse.json(
+        {
+          error:
+            "Upload en production : créez un Blob Store (Vercel > Storage > Blob) et ajoutez BLOB_READ_WRITE_TOKEN dans Environment Variables. Sinon utilisez « Ajouter par URL ».",
+        },
+        { status: 400 }
+      );
+    } else {
+      await mkdir(UPLOAD_DIR, { recursive: true });
+      const safeName = `v_${Date.now()}_${Math.random().toString(36).slice(2, 9)}${ext}`;
+      const filePath = path.join(UPLOAD_DIR, safeName);
+      const bytes = await file.arrayBuffer();
+      await writeFile(filePath, Buffer.from(bytes));
+      url = `/videos/${safeName}`;
+    }
 
     const video = await prisma.video.create({
       data: { url, title: title.trim(), likes: 0 },
@@ -135,7 +151,7 @@ export async function POST(request: Request) {
   } catch (e) {
     console.error("Upload error:", e);
     return NextResponse.json(
-      { error: "Erreur lors de l’upload" },
+      { error: "Erreur lors de l'upload" },
       { status: 500 }
     );
   }

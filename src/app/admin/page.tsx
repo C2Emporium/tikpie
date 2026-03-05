@@ -118,7 +118,7 @@ export default function AdminPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+    <main id="main-content" className="min-h-screen bg-zinc-950 text-zinc-100" role="main">
       {/* Header discret, style back-office */}
       <header className="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
         <div className="mx-auto flex h-12 max-w-3xl items-center justify-between px-4">
@@ -133,12 +133,56 @@ export default function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Ajouter par URL — idéal pour le site en ligne (Vercel) */}
+        {/* Upload fichier — depuis téléphone ou PC */}
         <form
-          onSubmit={handleAddByUrl}
+          onSubmit={handleSubmit}
           className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
         >
-          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Ajouter par URL</h2>
+          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Upload vidéo (téléphone ou PC)</h2>
+          <p className="mb-4 text-xs text-zinc-500">
+            Choisis une vidéo depuis ton téléphone ou ton ordinateur. En production (Vercel), ajoute <strong>BLOB_READ_WRITE_TOKEN</strong> (Storage → Blob) pour activer l'upload. Max 4 Mo en prod (limite Vercel), 100 Mo en local. Pour des vidéos plus lourdes, utilise « Ajouter par URL ».
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="title" className="mb-1 block text-xs text-zinc-500">
+                Titre
+              </label>
+              <input
+                id="title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Titre"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-zinc-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="file" className="mb-1 block text-xs text-zinc-500">
+                Fichier (MP4, WebM, MOV)
+              </label>
+              <input
+                id="file"
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+                className="block w-full text-xs text-zinc-400 file:mr-3 file:rounded file:border-0 file:bg-zinc-600 file:px-3 file:py-1.5 file:text-zinc-200 file:cursor-pointer hover:file:bg-zinc-500"
+              />
+            </div>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <button
+              type="submit"
+              disabled={uploading}
+              className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {uploading ? "Envoi…" : "Publier la vidéo"}
+            </button>
+          </div>
+        </form>
+
+        <form
+          onSubmit={handleAddByUrl}
+          className="mb-10 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
+        >
+          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Ajouter par URL (alternative)</h2>
           <p className="mb-4 text-xs text-zinc-500">
             Colle le lien direct d’une vidéo (MP4, etc.) déjà en ligne — Cloudinary, Bunny, ou tout hébergeur.
           </p>
@@ -179,49 +223,6 @@ export default function AdminPage() {
               className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {addingByUrl ? "Ajout…" : "Ajouter la vidéo"}
-            </button>
-          </div>
-        </form>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mb-10 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
-        >
-          <h2 className="mb-4 text-sm font-semibold text-zinc-300">Upload fichier (local uniquement)</h2>
-          <p className="mb-4 text-xs text-zinc-500">
-            En production (Vercel) les fichiers ne sont pas conservés — utilise « Ajouter par URL » ci-dessus.
-          </p>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="title" className="mb-1 block text-xs text-zinc-500">
-                Titre
-              </label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Titre"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-zinc-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="file" className="mb-1 block text-xs text-zinc-500">
-                Fichier (MP4, WebM, MOV — max 100 Mo)
-              </label>
-              <input
-                id="file"
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
-                className="block w-full text-xs text-zinc-400 file:mr-3 file:rounded file:border-0 file:bg-zinc-600 file:px-3 file:py-1.5 file:text-zinc-200 file:cursor-pointer hover:file:bg-zinc-500"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={uploading}
-              className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {uploading ? "Envoi…" : "Enregistrer"}
             </button>
           </div>
         </form>

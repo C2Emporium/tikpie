@@ -1,0 +1,19 @@
+// Prisma schema pour Tikpie - Plateforme Vidéo Short-Form
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Video {
+  id        String   @id @default(cuid())
+  url       String
+  title     String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

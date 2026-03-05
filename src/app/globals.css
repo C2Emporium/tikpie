@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+/* Scroll snap pour le flux vertical type TikTok */
+.snap-y-mandatory {
+  scroll-snap-type: y mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Masquer la scrollbar tout en gardant le scroll */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area pour encoche / barre de statut */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Hauteur d’un slide = viewport moins header et bottom nav */
+.slide-height {
+  min-height: calc(100dvh - 3.5rem - 4rem);
+  height: calc(100dvh - 3.5rem - 4rem);
+}

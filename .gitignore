@@ -1,0 +1,27 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next
+.next
+out
+
+# production
+build
+dist
+
+# misc
+.DS_Store
+*.pem
+.env
+.env*.local
+
+# prisma
+prisma/migrations/**/migration_lock.toml
+
+# uploaded videos (stored locally)
+public/videos

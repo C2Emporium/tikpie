@@ -1,6 +1,12 @@
 import { handleUpload } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -16,6 +22,10 @@ const VIDEO_TYPES = [
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 const ALLOWED_TYPES = [...VIDEO_TYPES, ...IMAGE_TYPES];
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
 
 export async function POST(request: Request): Promise<NextResponse> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -43,5 +53,5 @@ export async function POST(request: Request): Promise<NextResponse> {
     onUploadCompleted: async () => {},
   });
 
-  return NextResponse.json(jsonResponse);
+  return NextResponse.json(jsonResponse, { headers: corsHeaders });
 }

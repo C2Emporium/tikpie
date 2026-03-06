@@ -3,8 +3,9 @@ export interface VideoItem {
   url: string;
   title: string;
   likes: number;
+  mediaType?: "video" | "image";
 }
 
-export type FeedItem = 
+export type FeedItem =
   | { type: "video"; data: VideoItem }
   | { type: "ad"; id: string };

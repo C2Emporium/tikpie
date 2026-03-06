@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback } from "react";
 import VideoSlide from "./VideoSlide";
+import ImageSlide from "./ImageSlide";
 import AdBanner from "./AdBanner";
 import type { FeedItem } from "@/types/video";
 
@@ -45,6 +46,10 @@ export default function VerticalFeed({ items: initialItems }: VerticalFeedProps)
       {items.map((item, index) => {
         if (item.type === "ad") {
           return <AdBanner key={item.id} />;
+        }
+        const isImage = item.data.mediaType === "image";
+        if (isImage) {
+          return <ImageSlide key={item.data.id} video={item.data} />;
         }
         return (
           <VideoSlide

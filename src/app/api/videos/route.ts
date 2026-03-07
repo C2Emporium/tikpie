@@ -250,9 +250,14 @@ export async function POST(request: Request) {
     return NextResponse.json(video, { status: 201 });
   } catch (e) {
     console.error("Upload error:", e);
-    return NextResponse.json(
-      { error: "Erreur lors de l'upload" },
-      { status: 500 }
-    );
+    const err = e as { message?: string; code?: string };
+    let msg = "Erreur lors de l'upload.";
+    if (typeof err?.message === "string") {
+      if (/BLOB|blob|401|403/i.test(err.message)) msg = "Blob : vérifiez BLOB_READ_WRITE_TOKEN sur Vercel.";
+      else if (/P1001|P1002|connect|ECONNREFUSED|timeout/i.test(err.message)) msg = "Base injoignable : vérifiez DATABASE_URL.";
+      else if (/413|payload|body/i.test(err.message)) msg = "Fichier trop lourd (max 4 Mo).";
+      else msg = err.message;
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

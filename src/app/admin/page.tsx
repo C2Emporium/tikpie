@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { upload } from "@vercel/blob/client";
 
 interface VideoRow {
   id: string;
@@ -55,22 +54,19 @@ export default function AdminPage() {
     setError(null);
     setUploading(true);
 
-    try {
-      const pathname = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const blob = await upload(pathname, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-      });
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Max 4 Mo. Pour plus gros, utilise « Ajouter par URL ».");
+      return;
+    }
 
-      const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(file.name) || file.type.startsWith("image/");
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      formData.set("title", title.trim());
+
       const res = await fetch("/api/videos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: blob.url,
-          title: title.trim(),
-          mediaType: isImage ? "image" : "video",
-        }),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -155,7 +151,7 @@ export default function AdminPage() {
         >
           <h2 className="mb-4 text-sm font-semibold text-zinc-300">Upload vidéo ou image</h2>
           <p className="mb-4 text-xs text-zinc-500">
-            Depuis ta galerie ou ton ordinateur. Vidéos jusqu’à 100 Mo, images jusqu’à 10 Mo. Compatible portable.
+            Depuis ta galerie ou ton ordinateur. Max 4 Mo. Vidéos jusqu’à 100 Mo, images jusqu’à 10 Mo. Pour plus gros, utilise « Ajouter par URL ».
           </p>
           <div className="space-y-4">
             <div>
